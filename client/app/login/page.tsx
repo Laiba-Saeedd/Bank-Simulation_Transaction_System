@@ -2,6 +2,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { toast } from "react-hot-toast";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -9,6 +12,12 @@ export default function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState({ username: "", password: "", general: "" });
   const [loading, setLoading] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState(""); // success/error message
+  const [showPassword, setShowPassword] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   useEffect(() => {
     // if logged in redirect
@@ -67,6 +76,32 @@ if (!res.ok) throw new Error(data.message || "Login failed");
       setLoading(false);
     }
   };
+const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      toast.error("Please enter your email.");
+      return;
+    }
+
+    try {
+      setForgotLoading(true);
+      const res = await fetch("http://localhost:5000/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Something went wrong");
+
+      toast.success("Check your email for reset link!");
+      setIsModalOpen(false); // close modal after success
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+
 
   return (
     <div style={pageWrap}>
@@ -97,20 +132,80 @@ if (!res.ok) throw new Error(data.message || "Login failed");
         <input name="username" value={form.username} onChange={handleChange} placeholder="Username" style={inputStyle} required />
         {errors.username && <p style={errorStyle}>{errors.username}</p>}
 
-        <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" style={inputStyle} required />
+<div style={{ position: "relative", width: "100%" }}>
+  <input
+    name="password"
+    type={showPassword ? "text" : "password"}
+    value={form.password}
+    onChange={handleChange}
+    placeholder="Password"
+    style={{ 
+      ...inputStyle, 
+      width: "100%",     // full width
+      paddingRight: 40   // space for eye icon
+    }}
+    required
+  />
+  <span
+    style={{
+      position: "absolute",
+      right: 10,
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer",
+      fontSize: 20,
+      display: "flex",
+      alignItems: "center",
+    }}
+    onClick={() => setShowPassword(!showPassword)}
+  >
+    {showPassword ? <AiFillEye /> : <AiFillEyeInvisible />}
+  </span>
+</div>
+
         {errors.password && <p style={errorStyle}>{errors.password}</p>}
 
         <button type="submit" style={submitBtn} disabled={loading}>{loading ? "Logging..." : "Login"}</button>
-          <p style={{ marginTop: 10, fontSize: 14, textAlign: "center" }}>  <a
-          href="#"
-          style={{
-            color: "#667eea",
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
-        >
-          Forgot Password?
-        </a></p>
+     <div style={{ marginTop: 10, fontSize: 14, textAlign: "center" }}>
+  <button
+    onClick={() => setIsModalOpen(true)}
+    style={{ color: "#667eea", fontWeight: "bold", background: "none", border: "none", cursor: "pointer" }}
+  >
+    Forgot Password?
+  </button>
+
+  {/* Modal */}
+  {isModalOpen && (
+    <div style={overlay}>
+      <div style={modal}>
+        <h2>Forgot Password</h2>
+        <p>Enter your email to receive a reset link:</p>
+        <input
+          type="email"
+          placeholder="Email"
+          value={forgotEmail}
+          onChange={(e) => setForgotEmail(e.target.value)}
+          style={inputStyle}
+        />
+        <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+          <button
+            onClick={handleForgotPassword}
+            disabled={forgotLoading}
+            style={btn}
+          >
+            {forgotLoading ? "Sending..." : "Submit"}
+          </button>
+          <button onClick={() => setIsModalOpen(false)} style={btnCancel}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+
+
+
          {/* ✅ Create Account Link */}
       <p style={{ marginTop: 10, fontSize: 14, textAlign: "center" }}>
         Don’t have an account?{" "}
@@ -178,3 +273,47 @@ const submitBtn: React.CSSProperties = {
 };
 
 const errorStyle: React.CSSProperties = { color: "red", fontSize: 13, margin: 0 };
+const overlay: React.CSSProperties = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  background: "rgba(0,0,0,0.5)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1000,
+};
+
+const modal: React.CSSProperties = {
+  background: "#fff",
+  padding: 30,
+  borderRadius: 12,
+  width: "100%",
+  maxWidth: 400,
+  boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+};
+
+const btn: React.CSSProperties = {
+  flex: 1,
+  padding: 12,
+  background: "#667eea",
+  color: "#fff",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
+
+const btnCancel: React.CSSProperties = {
+  flex: 1,
+  padding: 12,
+  background: "#ccc",
+  color: "#333",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};

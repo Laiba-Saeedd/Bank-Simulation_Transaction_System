@@ -17,7 +17,6 @@ router.post("/login", validateLogin, loginUser);
 router.post("/refresh-token",refreshToken);
 // POST /api/logout
 router.post("/logout", authenticateToken, logoutUser);
-
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 export default router;

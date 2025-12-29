@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/apiClient";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+
 
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({ username: "", password: "", name: "", address: "", contact: "", role: "user", status: "active" });
   const [errors, setErrors] = useState({ username: "", password: "", name: "", contact: "", general: "" });
   const [success, setSuccess] = useState("");
+const [showPassword, setShowPassword] = useState(false);
 
   const validateField = (name: string, value: string) => {
     switch (name) {
@@ -104,7 +107,36 @@ export default function RegisterPage() {
 
         <input name="username" placeholder="Username" value={form.username} onChange={handleChange} style={inputStyle} required />
         {errors.username && <p style={errorStyle}>{errors.username}</p>}
-        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} style={inputStyle} required />
+<div style={{ position: "relative", width: "100%" }}>
+  <input
+    name="password"
+    type={showPassword ? "text" : "password"}
+    placeholder="Password"
+    value={form.password}
+    onChange={handleChange}
+    style={{ 
+      ...inputStyle, 
+      width: "100%", 
+      paddingRight: 40 // space for eye icon
+    }}
+    required
+  />
+  <span
+    style={{
+      position: "absolute",
+      right: 10,
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer",
+      fontSize: 20,
+      display: "flex",
+      alignItems: "center",
+    }}
+    onClick={() => setShowPassword(!showPassword)}
+  >
+    {showPassword ? <AiFillEye /> : <AiFillEyeInvisible />}
+  </span>
+</div>
         {errors.password && <p style={errorStyle}>{errors.password}</p>}
         <input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} style={inputStyle} required />
         {errors.name && <p style={errorStyle}>{errors.name}</p>}

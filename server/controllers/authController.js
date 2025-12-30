@@ -12,52 +12,6 @@ const hashToken = async (token) => {
   return await bcrypt.hash(token, salt);
 };
 
-// Register a new user
-// export const registerUser = async (req, res) => {
-//   const { username, password, name, address, contact, role, status } = req.body;
-
-//   try {
-//     // 1. Check if username already exists
-//     User.findByUsername(username, async (err, existingUser) => {
-//       if (err) {
-//         console.error("DB Error:", err);
-//         return res.status(500).json({ message: "Database error", error: err.message });
-//       }
-
-//       if (existingUser.length > 0) {
-//         return res.status(400).json({ message: "Username already exists" });
-//       }
-
-//       // 2. Hash the password
-//       const hashedPassword = await bcrypt.hash(password, 10);
-
-//       // 3. Create new user object
-//       const newUser = {
-//         username,
-//         password: hashedPassword,
-//         name,
-//         address,
-//         contact,
-//         role:  role||"user",      
-//         status: status || "active", // default to active
-//         created_at: new Date(),     // current timestamp
-//       };
-
-//       // 4. Save user to database
-//       User.create(newUser, (err) => {
-//         if (err) {
-//           console.error("DB Error:", err);
-//           return res.status(500).json({ message: "Failed to register user", error: err.message });
-//         }
-
-//         res.status(201).json({ message: "User registered successfully!" });
-//       });
-//     });
-//   } catch (error) {
-//     console.error("Unexpected Error:", error);
-//     res.status(500).json({ message: "Internal server error", error: error.message });
-//   }
-// };
 export const registerUser = async (req, res) => {
   const { username, password, name, address, contact, role, status } = req.body;
 
@@ -98,65 +52,6 @@ const generateRefreshToken = (user) =>
   jwt.sign({ id: user.user_id ,   role: user.role,}, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRE });
 
 
-// LOGIN
-// export const loginUser = (req, res) => {
-//   const { username, password } = req.body;
-
-//   User.findByUsername(username, async (err, users) => {
-//     if (err) return res.status(500).json({ message: "Database error", error: err.message });
-//     if (users.length === 0) return res.status(400).json({ message: "User not found" });
-
-//     const user = users[0];
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-
-//     // Calculate expiresAt (7 days for refresh token)
-//     const expiresAt = new Date();
-//     expiresAt.setDate(expiresAt.getDate() + 7);
-
-// const accessToken = generateAccessToken(user);
-// const refreshToken = generateRefreshToken(user);
-
-// // Hash both tokens before saving
-// const hashedAccessToken = await hashToken(accessToken);
-// const hashedRefreshToken = await hashToken(refreshToken);
-
-// // Save hashed tokens in DB
-// Token.createOrUpdate(user.user_id, hashedAccessToken, hashedRefreshToken, expiresAt, (err) => {
-//   if (err) console.error("Token DB Error:", err);
-// });
-
-// // Send plain tokens to client
-// res.cookie("refreshToken", refreshToken, {
-//   httpOnly: true,
-//   secure: false, // true in prod
-//   sameSite: "lax",
-//   path: "/",
-//   maxAge: 7 * 24 * 60 * 60 * 1000,
-// });
-// res.cookie("accessToken", accessToken, {
-//   httpOnly: true,
-//   secure: false, // true in prod
-//   sameSite: "lax",
-//   path: "/",
-//   maxAge: 7 * 24 * 60 * 60 * 1000,
-// });
-
-// res.status(200).json({
-//   message: "Login successful",
-//   accessToken,    // plain JWT
-//   refreshToken,   // plain JWT
-//   expiresAt,
-//       user: {
-//         id: user.user_id,
-//         username: user.username,
-//         name: user.name,
-//         role: user.role,
-//         status: user.status,
-//       },
-//     });
-//   });
-// };
 export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
@@ -319,47 +214,6 @@ db.query(
   });
 };
 
-// 🔹 Reset Password
-// export const resetPassword = (req, res) => {
-//   const { email, token, password } = req.body;
-//   if (!email || !token || !password)
-//     return res.status(400).json({ message: "All fields are required" });
-
-//   db.query(
-//     "SELECT reset_token, reset_token_expiry FROM users WHERE contact = ?",
-//     [email],
-//     (err, results) => {
-//       if (err) return res.status(500).json({ message: "DB error" });
-//       if (!results.length) return res.status(404).json({ message: "User not found" });
-
-//       const user = results[0];
-
-//       if (!user.reset_token || Date.now() > user.reset_token_expiry) {
-//   return res.status(400).json({ message: "Token expired. Please request a new link." });
-// }
-
-
-//       bcrypt.compare(token, user.reset_token, (err, isValid) => {
-//         if (err) return res.status(500).json({ message: "Error validating token" });
-//         if (!isValid) return res.status(400).json({ message: "Invalid token" });
-
-//         // Hash new password
-//         bcrypt.hash(password, 10, (err, hashedPassword) => {
-//           if (err) return res.status(500).json({ message: "Hashing error" });
-
-//           db.query(
-//             "UPDATE users SET password=?, reset_token=NULL, reset_token_expiry=NULL WHERE contact=?",
-//             [hashedPassword, email],
-//             (err) => {
-//               if (err) return res.status(500).json({ message: "DB error" });
-//               res.json({ message: "Password updated successfully" });
-//             }
-//           );
-//         });
-//       });
-//     }
-//   );
-// };
 export const resetPassword = (req, res) => {
   const { email, token, password } = req.body;
 
@@ -382,7 +236,6 @@ export const resetPassword = (req, res) => {
           message: "Reset link has expired. Please request a new one.",
         });
       }
-
       // 🔑 TOKEN MATCH
       const isMatch = await bcrypt.compare(token, user.reset_token);
       if (!isMatch)
